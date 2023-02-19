@@ -1,0 +1,16 @@
+
+{% extends 'webApp/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+  <h1>Change draft status</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'webApp:doctor_dashboard' %}" class="btn btn-default">Cancel</a>
+  </form>
+    </div>
+</div>
+{% endblock %}

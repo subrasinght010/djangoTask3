@@ -1,0 +1,17 @@
+
+{% extends 'webApp/base.html' %}
+
+{% block content %}
+
+
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+    <h1>Create Blog Post</h1>
+    <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit</button>
+  </form>
+       
+{% endblock %}

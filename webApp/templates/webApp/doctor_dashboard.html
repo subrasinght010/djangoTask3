@@ -1,0 +1,63 @@
+{% extends "webApp/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <div class="container">
+    <h1 class="text-center">Welcome to the Doctor Dashboard</h1>
+    {% if  doctor.has_speciality %}
+      <h2 class="text-center my-4">Your speciality: {{ doctor.speciality }}</h2>
+    {% elif not doctor.has_speciality %}
+      <div class=" text-center my-4">
+        <a href="{% url 'webApp:add_speciality' %}" class="btn btn-primary btn-sm">Add speciality</a>
+      </div>
+    {% endif %}
+    <h1 class="my-4">Blog Posts</h1>
+    <div class="row">
+      <a href="{% url 'webApp:blog_create'  %}" class="btn btn-success btn-sm mr-2">Add</a>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Doctor</th>
+              <th>Created</th>
+              <th>Category</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for post in posts %}
+              <tr>
+                <td>{{ post.title }}</td>
+                <td>{{ post.created_by }}</td>
+                <td>{{ post.created_at }}</td>
+                <td>{{ post.category }}</td>
+                <td>
+                  <a href="{% url 'webApp:blog_detail' pk=post.pk %}" class="btn btn-primary btn-sm mr-2">View</a>
+                  <a href="{% url 'webApp:blog_update' pk=post.pk %}" class="btn btn-warning btn-sm mr-2">Edit</a>
+                  <a href="{% url 'webApp:blog_delete' pk=post.pk %}" class="btn btn-danger btn-sm mr-2">Delete</a>
+                  <form action="{% url 'webApp:change_draft' pk=post.pk %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    {% if post.is_draft %}
+                      <input type="hidden" name="is_draft" value="False">
+                      <button type="submit" class="btn btn-success btn-sm mr-2">Publish</button>
+                    {% else %}
+                      <input type="hidden" name="is_draft" value="True">
+                      <button type="submit" class="btn btn-secondary btn-sm mr-2">Draft</button>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5">No blog posts yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}
