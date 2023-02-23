@@ -176,15 +176,3 @@ LOGIN_REDIRECT_URL = '/'
 # myapp/__init__.py
 
 # default_app_config = 'webApp.apps.MyAppConfig'
-
-
-# Google API credentials
-# GOOGLE_CLIENT_ID = '658455628739-tk46euv5m7rkaesf4417qqi3vs97ee5h.apps.googleusercontent.com'
-# GOOGLE_CLIENT_SECRET = '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'
-GOOGLE_REDIRECT_URI = 'http://localhost:8000/google-auth-callback'
-
-
-
-
-# Google Calendar API version
-GOOGLE_CALENDAR_API_VERSION = 'v3'

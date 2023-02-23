@@ -167,7 +167,21 @@ class BlogPostForm(forms.ModelForm):
         }
 
 
+class DraftForm(forms.ModelForm):
+    DRAFT_CHOICES = (
+        (True, 'Draft'),
+        (False, 'Published'),
+    )
+    draft = forms.TypedChoiceField(
+        label='Draft status',
+        choices=DRAFT_CHOICES,
+        widget=forms.RadioSelect,
+        coerce=lambda x: x == 'True',
+    )
 
+    class Meta:
+        model = BlogPost
+        fields = ['draft']
 
 class DraftStatusForm(forms.ModelForm):
     DRAFT_CHOICES = (

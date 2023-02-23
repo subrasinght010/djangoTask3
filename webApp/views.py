@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 from django.views.generic import ListView,UpdateView,DetailView
-from .models import BlogPost,Doctor,Profile
-from django.conf import settings
+from .models import BlogPost,Doctor
+
+
 from django.http import HttpResponse
 
 from django.core.paginator import Paginator
@@ -12,11 +13,10 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
-from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from datetime import datetime, timedelta,time
+from datetime import datetime, timedelta
 
 class HomeView(TemplateView):
     template_name = "webApp/home.html"
@@ -162,7 +162,7 @@ class DoctorListView(ListView):
     model = Doctor
     template_name = 'webApp/doctorlist.html'
     context_object_name = 'doctors'
-    paginate_by = 6
+    paginate_by = 2
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -184,26 +184,7 @@ class BlogPostListView(ListView):
     context_object_name = 'posts'
     queryset = BlogPost.objects.filter(is_draft=False)
 
-# class BlogPostListView(LoginRequiredMixin, ListView):
-#     model = BlogPost
-#     template_name = 'webApp/post_list.html'
-#     context_object_name = 'posts'
-#     ordering = ['-created_at']
-#     paginate_by = 4  # Number of posts to display per page
 
-#     def get_queryset(self):
-#         queryset = super().get_queryset()
-#         queryset = queryset.filter(created_by=self.request.user)
-#         return queryset
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         posts = context['object_list']
-#         paginator = Paginator(posts, self.paginate_by)
-#         page_number = self.request.GET.get('page')
-#         page_obj = paginator.get_page(page_number)
-#         context['page_obj'] = page_obj
-#         return context
 
 
 
@@ -228,7 +209,6 @@ def update_doctor_speciality(request):
 
 
 
-
 def book_appointment(request,pk):
     if request.method == 'POST':
         form = AppointmentForm(request.POST)
@@ -241,35 +221,46 @@ def book_appointment(request,pk):
             # Check if appointment is scheduled before 6pm closing time
             closing_time = time(hour=18, minute=0)
             appointment_time = time(hour=total_minutes//60,minute=total_minutes%60)
+
+            now = datetime.now()
+            if appointment.date < now.date() or (appointment.date == now.date() and appointment.start_time < now.time()):
+                messages.error(request, 'Appointments cannot be scheduled in the past')
+                context = {'form': form}
+                return render(request, 'webApp/book_appointment.html', context)
+
             if appointment_time > closing_time:
                 messages.error(request, 'Appointments cannot be scheduled after 6pm')
                 context = {'form': form}
                 return render(request, 'webApp/book_appointment.html', context)
+            elif appointment.start_time < time(hour=9, minute=0):
+                messages.error(request, 'Appointments cannot be scheduled before 9am')
+                context = {'form': form}
+                return render(request, 'webApp/book_appointment.html', context)
 
             appointment.doctor= Doctor.objects.get(pk=pk)
+            
+
+
+            
             appointment.save()
-            t=appointment.start_time.hour * 60 + appointment.start_time.minute
+           
 
             doctor = appointment.doctor
-            appointment_time1 = time(hour=t//60,minute=t%60)
 
-            start_time = appointment_time1
-            delta = timedelta(minutes=45)
+            start_time = time(hour=appointment.start_time.hour,minute=appointment.start_time.minute)
+            date = appointment.date
 
-            start_datetime = datetime.combine(datetime.today(), start_time)  # Convert time object to datetime object
-            end_datetime = start_datetime + delta
-            end_time = end_datetime.time()
-
+           
             try:
-                # res= create_calendar_event(doctor, date, start_time)
-                messages.success(request, 'Appointment booked successfully!')
-                context = {
-                'description': 'Appointment with Dr. ' + doctor.user.first_name + ' ' + doctor.user.last_name,
-                'date' :appointment.date,
-                'start' :appointment.start_time,
-                'end':end_time,
-                }
-                return render(request, 'webApp/appointment_confirmation.html', context)
+                if create_calendar_event(doctor, date, start_time):
+                    context = {
+                    'description': 'Appointment with Dr. ' + doctor.user.first_name + ' ' + doctor.user.last_name,
+                    'date' :appointment.date,
+                    'start' :appointment.start_time,
+                    'end':appointment.end_time,
+                    }
+                    messages.success(request, 'Appointment booked successfully!')
+                    return render(request, 'webApp/appointment_confirmation.html', context)
             except HttpError as error:
                 messages.error(request, 'Error occurred while creating calendar event: ' + str(error))
 
@@ -278,5 +269,3 @@ def book_appointment(request,pk):
 
     context = {'form': form}
     return render(request, 'webApp/book_appointment.html', context)
-
-
